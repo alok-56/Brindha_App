@@ -11,21 +11,34 @@ import {
 import Header from "../../Components/Header";
 import { colors, routes } from "../../Helper/Contant";
 import BagIcon from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { addToCart, updateQuantity } from "../../Redux/Slices/cartSlice";
 
 const ProductDetails = () => {
-    const [selectedSize, setSelectedSize] = useState("Medium - 7 KG");
+    const navigation = useNavigation();
+    const route = useRoute();
+    const item = route?.params?.item;
+    
+
+    const dispatch = useDispatch();
+
+    // Sizes based on measurement unit and specific values
+    const sizeValues = [1, 2, 3, 5, 10];
+    const unit = item?.Measturments?.measurement || "units";
+
+    // Initialize selectedSize to first size option
+    const [selectedSize, setSelectedSize] = useState(`₹{sizeValues[1]} ₹{unit}`); // Default to "2 meters" for example
     const [selectedColor, setSelectedColor] = useState("#FF0000");
-    const navigation = useNavigation()
 
     const colorOptions = [
-        "#FF0000", // Red
-        "#0000FF", // Blue
-        "#00FF00", // Green
-        "#FFA500", // Orange
-        "#800080", // Purple
-        "#000000", // Black
+        "#FF0000", "#0000FF", "#00FF00", "#FFA500", "#800080", "#000000",
     ];
+
+    const productImage = item?.Images?.[0] || null;
+    const features = item?.Features || [];
+    const discount = item?.Discount || "0%";
+    const newPrice = item?.SellingPrice || 0;
 
     return (
         <View style={styles.container}>
@@ -34,85 +47,85 @@ const ProductDetails = () => {
                     <Header onBack={() => navigation.goBack()}>
                         <TouchableOpacity style={styles.headerButton}>
                             <View style={styles.headerButtonContent}>
-                                <Text style={styles.headerButtonText}>Sewing Machines</Text>
+                                <Text style={styles.headerButtonText}>
+                                    Product Details
+                                </Text>
                             </View>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.iconBox, styles.bagIcon]} onPress={() => navigation.navigate(routes.MYBAG_SCREEN)}>
+                        <TouchableOpacity
+                            style={[styles.iconBox, styles.bagIcon]}
+                            onPress={() => navigation.navigate(routes.MYBAG_SCREEN)}
+                        >
                             <BagIcon name="bag" size={24} color="rgba(51, 51, 51, 1)" />
                         </TouchableOpacity>
                     </Header>
                 </View>
 
-                <Image
-                    style={styles.productImage}
-                    source={require("../../Assests/Images/details.png")}
-                />
+                {productImage && (
+                    <Image
+                        style={styles.productImage}
+                        source={{ uri: productImage }}
+                    />
+                )}
 
                 <View style={styles.titleRow}>
                     <View>
                         <View style={styles.nameDiscountRow}>
-                            <Text style={styles.productName}>Product Name</Text>
-                            <Text style={styles.discountTag}>10% OFF!</Text>
+                            <Text style={styles.productName}>{item?.Name || "Product Name"}</Text>
+                            <Text style={styles.discountTag}>{discount} OFF!</Text>
                         </View>
-                        <Text style={styles.rating}>⭐⭐⭐⭐⭐ 4.0(25)</Text>
                     </View>
 
                     <View style={styles.priceBox}>
-                        <Text style={styles.oldPrice}>$80</Text>
-                        <Text style={styles.newPrice}>$60</Text>
+                        <Text style={styles.newPrice}>₹{newPrice}</Text>
                     </View>
                 </View>
 
                 <View style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Product Details</Text>
                     <Text style={styles.description}>
-                        Upgrade your stitching with this powerful heavy-duty sewing machine,
-                        designed for boutique owners and tailors. It features multiple
-                        stitch patterns, an automatic thread cutter, and a durable metal
-                        frame for precision and stability.
+                        {item?.Description || "No description provided."}
                     </Text>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Features</Text>
-                    <View style={styles.flexWrapRow}>
-                        {[
-                            "12 built-in stitch patterns",
-                            "Automatic thread cutter",
-                            "Durable metal frame",
-                            "LED lighting",
-                        ].map((feature, index) => (
-                            <Text key={index} style={styles.optionBox}>
-                                {feature}
-                            </Text>
-                        ))}
+                {features.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Features</Text>
+                        <View style={styles.flexWrapRow}>
+                            {features.map((feature, index) => (
+                                <Text key={index} style={styles.optionBox}>
+                                    {feature}
+                                </Text>
+                            ))}
+                        </View>
                     </View>
-                </View>
+                )}
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Select Size</Text>
                     <View style={styles.flexWrapRow}>
-                        {["Small - 5 KG", "Medium - 7 KG", "Large - 9 KG"].map(
-                            (size, index) => (
+                        {sizeValues.map((value, index) => {
+                            const sizeLabel = `${value} ${unit}`;
+                            return (
                                 <TouchableOpacity
                                     key={index}
-                                    onPress={() => setSelectedSize(size)}
+                                    onPress={() => setSelectedSize(value)}
                                     style={[
                                         styles.optionBox,
-                                        selectedSize === size && styles.activeOptionBox,
+                                        selectedSize === value && styles.activeOptionBox,
                                     ]}
                                 >
                                     <Text
                                         style={[
                                             styles.optionText,
-                                            selectedSize === size && styles.activeOptionText,
+                                             selectedSize === value && styles.activeOptionText,
                                         ]}
                                     >
-                                        {size}
+                                        {sizeLabel}
                                     </Text>
                                 </TouchableOpacity>
-                            )
-                        )}
+                            );
+                        })}
                     </View>
                 </View>
 
@@ -140,9 +153,17 @@ const ProductDetails = () => {
                 <View style={styles.footerRow}>
                     <View>
                         <Text style={styles.priceLabel}>Total Price</Text>
-                        <Text style={styles.priceValue}>$87.77</Text>
+                        <Text style={styles.priceValue}>₹{newPrice}</Text>
                     </View>
-                    <TouchableOpacity style={styles.addToBagButton} onPress={() => Alert.alert("Product Added Successfully")}>
+                    <TouchableOpacity
+                        style={styles.addToBagButton}
+                        onPress={() => {
+                            dispatch(addToCart(item));
+                            dispatch(updateQuantity({ _id: item._id, quantity: selectedSize }));
+                            Alert.alert("Success", "Product added to cart");
+                            navigation.navigate(routes.PRODUCT_SCREEN)
+                        }}
+                    >
                         <View style={styles.addToBagContent}>
                             <BagIcon name="bag" size={24} color="#fff" />
                             <Text style={styles.addToBagText}>Add to Bag</Text>
@@ -221,12 +242,6 @@ const styles = StyleSheet.create({
         marginLeft: 5,
         marginTop: 5,
         borderRadius: 12,
-    },
-    rating: {
-        fontSize: 14,
-        fontWeight: "400",
-        color: "gray",
-        marginTop: 2,
     },
     priceBox: {
         flexDirection: "row",

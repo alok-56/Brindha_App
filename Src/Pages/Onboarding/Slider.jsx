@@ -131,7 +131,7 @@ const Slider = () => {
             fontWeight: "600",
           }}
           text={currentIndex === slides.length - 1 ? "Get Started" : "Next"}
-          onClick={currentIndex === slides.length - 1 ? () => navigation.navigate(routes.SIGNUP_SCREEN) : handleNext}
+          onClick={currentIndex === slides.length - 1 ? () => navigation.navigate(routes.USERTYPE_SCREEN) : handleNext}
         />
       </ImageBackground>
     </View>

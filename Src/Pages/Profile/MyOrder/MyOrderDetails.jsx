@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
     FlatList,
     Image,
@@ -10,45 +10,54 @@ import {
 } from "react-native";
 import Header from "../../../Components/Header";
 import { colors } from "../../../Helper/Contant";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const OrderDetailsScreen = () => {
-     const navigation=useNavigation()
-    const [products] = useState([
-        {
-            id: 1,
-            name: "Product A",
-            size: "Small",
-            color: "Teal",
-            price: 60,
-            quantity: 2,
-            image: require("../../../Assests/Images/product.png"),
-        },
-        {
-            id: 2,
-            name: "Product B",
-            size: "Medium",
-            color: "Blue",
-            price: 80,
-            quantity: 1,
-            image: require("../../../Assests/Images/product.png"),
-        },
-    ]);
+    const navigation = useNavigation();
+    const route = useRoute();
 
-    const [currentStep] = useState(1); // 0 = placed, 1 = in transit, 2 = delivered
+    const { orderData } = route.params || {};
 
-    const total = products.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (!orderData) {
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <Text>Order data not available.</Text>
+            </View>
+        );
+    }
+
+    const { subOrder, order } = orderData;
+    const products = subOrder.products || [];
+
+    const total = subOrder.total
+
+    const getStepFromStatus = (status) => {
+        switch (status?.toLowerCase()) {
+            case "processing":
+                return 0;
+            case "shipped":
+                return 1;
+            case "delivered":
+                return 2;
+            default:
+                return 0;
+        }
+    };
+
+    const currentStep = getStepFromStatus(subOrder.status);
 
     const renderItem = ({ item }) => (
         <View style={styles.itemContainer}>
             <View style={styles.itemRow}>
                 <View style={styles.productInfo}>
-                    <Image style={styles.productImage} source={item.image} />
+                    <Image
+                        style={styles.productImage}
+                        source={{ uri: item.image?.[0] }}
+                    />
                     <View style={styles.productDetails}>
-                        <Text style={styles.productName}>{item.name}</Text>
-                        <Text style={styles.productSubText}>Size: {item.size}</Text>
-                        <Text style={styles.productSubText}>Color: {item.color}</Text>
-                        <Text style={styles.productPrice}>${item.price}</Text>
+                        <Text style={styles.productName}>Product</Text>
+                        <Text style={styles.productSubText}>Price: ₹{item.price}</Text>
+                        <Text style={styles.productSubText}>Qty: {item.quantity}</Text>
                     </View>
                 </View>
                 <View style={styles.quantityWrapper}>
@@ -81,18 +90,16 @@ const OrderDetailsScreen = () => {
     return (
         <View style={styles.container}>
             <View style={{ marginTop: 20 }}>
-                <Header onBack={()=>navigation.goBack()}>
+                <Header onBack={() => navigation.goBack()}>
                     <Text style={styles.headerTitle}>Order Details</Text>
-                    <View></View>
+                    <View />
                 </Header>
             </View>
 
-
             <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-                {/* Product List */}
                 <FlatList
                     data={products}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item, index) => index.toString()}
                     renderItem={renderItem}
                     scrollEnabled={false}
                     ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -104,38 +111,31 @@ const OrderDetailsScreen = () => {
                     <Text style={styles.summaryTitle}>Order Summary</Text>
                     <View style={styles.summaryRow}>
                         <Text>Subtotal</Text>
-                        <Text>${total.toFixed(2)}</Text>
+                        <Text>₹{subOrder.total - subOrder.deliveryCharge}</Text>
                     </View>
                     <View style={styles.summaryRow}>
-                        <Text>Shipping</Text>
-                        <Text>$10.00</Text>
-                    </View>
-                    <View style={styles.summaryRow}>
-                        <Text>Discount</Text>
-                        <Text>$10.00</Text>
+                        <Text>Delivery Charge</Text>
+                        <Text>₹{subOrder.deliveryCharge}</Text>
                     </View>
                     <View style={styles.summaryRow}>
                         <Text style={{ fontWeight: "bold" }}>Total</Text>
-                        <Text style={{ fontWeight: "bold" }}>
-                            ${(total + 10 - 10).toFixed(2)}
-                        </Text>
+                        <Text style={{ fontWeight: "bold" }}>₹{total.toFixed(2)}</Text>
                     </View>
                 </View>
 
-                {/* Tracking Section */}
+                {/* Order Tracking */}
                 <View style={styles.trackingContainer}>
                     <Text style={styles.summaryTitle}>Order Tracking</Text>
                     <View style={styles.verticalSteps}>
                         {renderStep(0, "Order Placed", false)}
-                        {renderStep(1, "In Transit", false)}
+                        {renderStep(1, "Shipped", false)}
                         {renderStep(2, "Delivered", true)}
                     </View>
                 </View>
 
-                <TouchableOpacity style={styles.cancelButton} onPress={() => console.log("Cancel Pressed")}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => console.log("Cancel Order Pressed")}>
                     <Text style={styles.cancelButtonText}>Cancel Order</Text>
                 </TouchableOpacity>
-
             </ScrollView>
         </View>
     );
@@ -239,5 +239,4 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
-
 });

@@ -1,13 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
-    Image,
     ImageBackground,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
+    Image
 } from "react-native";
 import HeadersAddress from "../../Components/Main/HeadersAddress";
 import SearchIcon from "react-native-vector-icons/EvilIcons";
@@ -15,32 +14,103 @@ import { colors, routes } from "../../Helper/Contant";
 import Cateogery from "../../Components/Main/Cateogery";
 import ProductCard from "../../Components/Main/ProductCard";
 import { useNavigation } from "@react-navigation/native";
+import { FetchProductApi, GetCategries } from "../../Api/Products";
 
 const Home = () => {
-    const navigation = useNavigation()
+    const navigation = useNavigation();
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [filters, setFilters] = useState({});
+    const [categries, setCategries] = useState([])
+
+    useEffect(() => {
+        fetchProducts(filters);
+    }, [filters]);
+
+    useEffect(() => {
+        fetchcategries()
+    }, [])
+
+    const fetchProducts = async (appliedFilters = {}) => {
+        setLoading(true);
+        try {
+            const res = await FetchProductApi(1, { ...appliedFilters, limit: 10 });
+            if (res.status) {
+                setProducts(res.data);
+            } else {
+                setProducts([]);
+            }
+        } catch (error) {
+            console.error("API error:", error);
+            setProducts([]);
+        }
+        setLoading(false);
+    };
+
+    const handleFilterChange = (tag) => {
+        const newFilters = { ...filters };
+
+        if (tag === "discount") {
+            newFilters.discount = true;
+            delete newFilters.tag;
+        } else if (tag === "trending" || tag === "bestseller") {
+            newFilters.tag = tag;
+            delete newFilters.discount;
+        } else {
+            delete newFilters.discount;
+            delete newFilters.tag;
+        }
+
+        setFilters(newFilters);
+    };
+
+    const fetchcategries = async () => {
+        let res = await GetCategries()
+        if (res.status) {
+            setCategries(res.data)
+        } else {
+            setCategries([])
+        }
+    }
+
+    const onCategory = (id, name) => {
+        const filters = {
+            CategoryId: id,
+            Name: name
+        }
+        navigation.navigate(routes.PRODUCT_SCREEN, {
+            filters
+        })
+    }
+
+
     return (
         <View style={styles.container}>
-            <HeadersAddress onCard={() => navigation.navigate(routes.MYBAG_SCREEN)} onNOtification={() => navigation.navigate(routes.NOTIFICATION_SCREEN)} />
+            <HeadersAddress
+                onCard={() => navigation.navigate(routes.MYBAG_SCREEN)}
+                onNOtification={() => navigation.navigate(routes.NOTIFICATION_SCREEN)}
+            />
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Search Bar */}
-                <TouchableOpacity style={styles.searchContainer} onPress={() => navigation.navigate(routes.SEARCH_SCREEN)}>
-                    <SearchIcon name="search" size={24} color="#000" style={styles.searchIcon} />
-                    {/* <TextInput
-                        placeholder="Search (eg: Threads)"
-                        style={styles.searchInput}
-                        placeholderTextColor="#666"
-                    /> */}
-                    <Text
-                        style={styles.searchInput}
-                    >Search (eg: Threads)</Text>
+
+                <TouchableOpacity
+                    style={styles.searchContainer}
+                    onPress={() => navigation.navigate(routes.SEARCH_SCREEN)}
+                >
+                    <SearchIcon
+                        name="search"
+                        size={24}
+                        color="#000"
+                        style={styles.searchIcon}
+                    />
+                    <Text style={styles.searchInput}>Search (eg: Threads)</Text>
                 </TouchableOpacity>
 
-                {/* Banner */}
+
                 <View style={styles.bannerWrapper}>
                     <ImageBackground
                         source={require("../../Assests/Images/bannerbac.png")}
@@ -62,13 +132,21 @@ const Home = () => {
                     </ImageBackground>
                 </View>
 
-                {/* Category List */}
-                <Cateogery onSeeAll={() => navigation.navigate(routes.SEARCH_SCREEN)} />
 
-                {/* Product List */}
+                <Cateogery onSelectcat={(id,name) => onCategory(id,name)} onSeeAll={() => navigation.navigate(routes.SEARCH_SCREEN)} data={categries.slice(0, 4)} />
+
+
                 <View style={styles.productSection}>
                     <Text style={styles.productTitle}>Our Products</Text>
-                    <ProductCard onProductClick={() => navigation.navigate(routes.PRODUCT_DETAILS_SCREEN)} />
+                    <ProductCard
+                        data={products}
+                        loading={loading}
+                        onProductClick={(item) =>
+                            navigation.navigate(routes.PRODUCT_DETAILS_SCREEN, { item })
+                        }
+                        onFilterChange={handleFilterChange}
+
+                    />
                 </View>
             </ScrollView>
         </View>

@@ -1,25 +1,40 @@
-import React, { useContext } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import AppStack from "./Src/Navigation/AppStack";
-import AuthStack from "./Src/Navigation/AuthStack";
-import { authcontext } from "./Src/Context/AuthContext";
-import { ActivityIndicator, View } from "react-native";
+import React, {useContext, useEffect} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import AppStack from './Src/Navigation/AppStack';
+import AuthStack from './Src/Navigation/AuthStack';
+import {authcontext, AuthContextProvider} from './Src/Context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {store} from './Src/Redux/Store';
+import {Provider} from 'react-redux';
+
+const StarterScreen = () => {
+  const {islogin, setislogin} = useContext(authcontext);
+
+  const CheckUserToken = async () => {
+    let token = await AsyncStorage.getItem('token');
+    if (token !== null) {
+      setislogin(true);
+    } else {
+      setislogin(false);
+    }
+  };
+
+  useEffect(() => {
+    CheckUserToken();
+  }, []);
+
+  return islogin ? <AppStack /> : <AuthStack />;
+};
 
 const App = () => {
-  const { islogin } = useContext(authcontext);
-
-  if (islogin === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
   return (
-    <NavigationContainer>
-      {islogin ? <AppStack /> : <AuthStack />}
-    </NavigationContainer>
+    <Provider store={store}>
+      <AuthContextProvider>
+        <NavigationContainer>
+          <StarterScreen></StarterScreen>
+        </NavigationContainer>
+      </AuthContextProvider>
+    </Provider>
   );
 };
 

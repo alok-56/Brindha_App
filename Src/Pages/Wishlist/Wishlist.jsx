@@ -1,50 +1,86 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
-import SearchIcon from "react-native-vector-icons/EvilIcons";
+import BagIcon from 'react-native-vector-icons/Ionicons';
 import { colors, routes } from "../../Helper/Contant";
 import ProductCard from "../../Components/Main/ProductCard";
-import FilterIcon from 'react-native-vector-icons/AntDesign'
 import Header from "../../Components/Header";
-import BagIcon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
+const FAVORITES_KEY = 'FAVORITE_PRODUCTS';
+
 const Wishlist = () => {
-    const navigation=useNavigation()
+    const navigation = useNavigation();
+    const [favorites, setFavorites] = useState([]);
+
+    // Load favorites from AsyncStorage when screen mounts or focuses
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            try {
+                const favData = await AsyncStorage.getItem(FAVORITES_KEY);
+                console.log(favData)
+                if (favData) {
+                    setFavorites(JSON.parse(favData));
+                } else {
+                    setFavorites([]);
+                }
+            } catch (error) {
+                console.log("Error loading favorites:", error);
+            }
+        };
+
+        fetchFavorites();
+        const unsubscribe = navigation.addListener('focus', fetchFavorites);
+        return unsubscribe;
+    }, [navigation]);
+
     return (
         <View style={styles.container}>
             <View style={{ marginTop: 20 }}>
-                <Header onBack={()=>navigation.goBack()}>
+                <Header onBack={() => navigation.goBack()}>
                     <TouchableOpacity style={styles.headerButton}>
                         <View style={styles.headerButtonContent}>
                             <Text style={styles.headerButtonText}>My Wishlist</Text>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.iconBox, styles.bagIcon]} onPress={()=>navigation.navigate(routes.MYBAG_SCREEN)}>
+                    <TouchableOpacity
+                        style={[styles.iconBox, styles.bagIcon]}
+                        onPress={() => navigation.navigate(routes.MYBAG_SCREEN)}
+                    >
                         <BagIcon name="bag" size={24} color="rgba(51, 51, 51, 1)" />
                     </TouchableOpacity>
                 </Header>
             </View>
-
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                
-
-
-                {/* Product List */}
-                <View style={styles.productSection}>
-                    <ProductCard onProductClick={()=>navigation.navigate(routes.PRODUCT_DETAILS_SCREEN)} />
-                </View>
+                {/* If no favorites, show message */}
+                {favorites.length === 0 ? (
+                    <View style={{ marginTop: 50, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 18, color: '#777' }}>
+                            No favorites yet.
+                        </Text>
+                    </View>
+                ) : (
+                    <View style={styles.productSection}>
+                        <ProductCard
+                            data={favorites} 
+                            onProductClick={(item) =>
+                               navigation.navigate(routes.PRODUCT_DETAILS_SCREEN, { item })
+                            }
+                            filter={false}
+                        />
+                    </View>
+                )}
             </ScrollView>
         </View>
     );
@@ -59,81 +95,12 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 100,
-        marginTop:10
-    },
-    searchContainer: {
-        width: "80%",
-        height: 50,
-        flexDirection: "row",
-        alignSelf: "center",
-        alignItems: "center",
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: "rgba(208, 208, 208, 1)",
-        paddingHorizontal: 10,
-        marginTop: 15
-    },
-    searchIcon: {
-        marginRight: 8,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 16,
-    },
-    bannerWrapper: {
-        width: "90%",
-        alignSelf: "center",
-        borderRadius: 10,
         marginTop: 10,
-    },
-    bannerImage: {
-        width: "100%",
-        height: 170,
-        justifyContent: "center",
-    },
-    bannerContent: {
-        flexDirection: "row",
-        padding: 18,
-        alignItems: "center",
-    },
-    bannerTextSection: {
-        width: "50%",
-    },
-    bannerTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#000",
-    },
-    bannerSubtitle: {
-        fontSize: 14,
-        fontWeight: "400",
-        color: "#000",
-        marginTop: 3,
-    },
-    exploreButton: {
-        marginTop: 15,
-        width: 100,
-        height: 40,
-        backgroundColor: colors.PRIMARY,
-        borderRadius: 12,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    exploreText: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: "#fff",
     },
     productSection: {
         width: "90%",
         alignSelf: "center",
         marginTop: 10,
-    },
-    productTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#000",
-        marginBottom: 8,
     },
     headerButton: {
         width: 100,
@@ -165,5 +132,3 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
 });
-
-

@@ -3,13 +3,7 @@ import { FlatList, Text, View, Image, StyleSheet, TouchableOpacity } from 'react
 import LinearGradient from 'react-native-linear-gradient';
 import { colors } from '../../Helper/Contant';
 
-const Cateogery = ({ onSeeAll }) => {
-    const data = [
-        { id: 1, image: require('../../Assests/Images/product1.png') },
-        { id: 2, image: require('../../Assests/Images/product2.png') },
-        { id: 3, image: require('../../Assests/Images/product3.png') },
-        { id: 4, image: require('../../Assests/Images/product1.png') },
-    ];
+const Cateogery = ({ onSeeAll, data, onSelectcat }) => {
 
     return (
         <View style={styles.container}>
@@ -25,18 +19,18 @@ const Cateogery = ({ onSeeAll }) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={data}
-                keyExtractor={item => item.id.toString()}
+                keyExtractor={item => item._id.toString()}
                 contentContainerStyle={{ paddingVertical: 10 }}
                 renderItem={({ item }) => (
-                    <View style={styles.itemContainer}>
+                    <TouchableOpacity style={styles.itemContainer} onPress={() => onSelectcat(item._id, item.Categoryname)}>
                         <LinearGradient
                             colors={['rgba(117, 192, 210, 1)', 'rgba(237, 197, 197, 0.38)']}
                             start={{ x: 0.5, y: 0 }}
                             end={{ x: 0.5, y: 1 }}
                             style={styles.gradientCircle}>
-                            <Image source={item.image} style={styles.image} />
+                            <Image source={{ uri: `${item.Image}` }} style={styles.image} />
                         </LinearGradient>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
         </View>

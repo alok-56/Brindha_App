@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
     StyleSheet,
     Text,
@@ -6,12 +6,15 @@ import {
     View,
     ScrollView,
     Alert,
+    Image,
 } from 'react-native';
 import Header from '../../Components/Header';
 import { colors, routes } from '../../Helper/Contant';
 import RightIcon from 'react-native-vector-icons/SimpleLineIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { authcontext } from '../../Context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GetProfileApi } from '../../Api/Auth';
 
 const menuItems = [
     'Profile Details',
@@ -24,7 +27,21 @@ const menuItems = [
 
 const Profile = () => {
     const navigation = useNavigation();
-     const { islogin, setislogin } = useContext(authcontext);
+    const { islogin, setislogin } = useContext(authcontext);
+    const [data, setData] = useState([])
+
+    const FetchProfile = async () => {
+        let res = await GetProfileApi();
+        if (res.status) {
+            setData(res.data);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            FetchProfile()
+        }, [])
+    );
 
     const handleNavigation = label => {
         switch (label) {
@@ -35,7 +52,7 @@ const Profile = () => {
                 navigation.navigate(routes.MYORDER_SCREEN);
                 break;
             case 'Settings':
-                 navigation.navigate(routes.SETTING_SCREEN);
+                navigation.navigate(routes.SETTING_SCREEN);
                 break;
             case 'Privacy Policy':
                 navigation.navigate(routes.PRIVACYPOLICY_SCREEN);
@@ -48,9 +65,9 @@ const Profile = () => {
                     { text: 'Cancel', style: 'cancel' },
                     {
                         text: 'Yes',
-                        onPress: () => {
-                            // TODO: Clear tokens / user data here
-                           setislogin(false)
+                        onPress: async () => {
+                            await AsyncStorage.clear();
+                            setislogin(false);
                         },
                     },
                 ]);
@@ -63,7 +80,7 @@ const Profile = () => {
     return (
         <View style={styles.container}>
             <View style={styles.headerWrapper}>
-                <Header onBack={()=>navigation.goBack()}>
+                <Header onBack={() => navigation.goBack()}>
                     <TouchableOpacity style={styles.headerButton}>
                         <View style={styles.headerButtonContent}>
                             <Text style={styles.headerButtonText}>My Profile</Text>
@@ -75,10 +92,12 @@ const Profile = () => {
 
             <View style={styles.profileWrapper}>
                 <View style={styles.avatar}>
-                    <Text style={styles.editText}>Edit</Text>
+                    <Image style={{ width: "100%", height: "100%", borderRadius: 50 }} source={require('../../Assests/Images/avatar.jpg')}></Image>
                 </View>
-                <Text style={styles.profileName}>Anita Sharma</Text>
+                <Text style={styles.profileName}>{data.Username}</Text>
+                <Text style={{ fontSize: 14 }}>{data.Email}</Text>
             </View>
+
 
             <ScrollView contentContainerStyle={styles.sectionWrapper}>
                 {menuItems.map((item, index) => (

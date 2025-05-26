@@ -7,14 +7,15 @@ import {
     Image,
 } from "react-native";
 import Header from "../../Components/Header";
-import { colors } from "../../Helper/Contant";
+import { colors, routes } from "../../Helper/Contant";
 import CustomButton from "../../Components/CustomButton";
 import { authcontext } from "../../Context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 
 const UserType = () => {
     const [selected, setSelected] = useState(null);
-    const { islogin, setislogin } = useContext(authcontext);
+    const navigation = useNavigation()
 
     const handleSelect = (type) => {
         setSelected(type);
@@ -32,7 +33,7 @@ const UserType = () => {
     return (
         <View style={styles.container}>
             <View style={styles.headerWrapper}>
-                <Header>
+                <Header >
                     <TouchableOpacity style={styles.headerButton}>
                         <View style={styles.headerButtonContent}>
                             <Text style={styles.headerButtonText}>I am...</Text>
@@ -82,7 +83,12 @@ const UserType = () => {
                 TextStyle={styles.confirmButtonText}
                 text="Confirm"
                 onClick={() => {
-                    setislogin(true)
+                    if(selected){
+   navigation.navigate(routes.SIGNUP_SCREEN, {
+                        type: selected
+                    })
+                    }
+                 
                 }}
             />
         </View>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     ImageBackground,
     View,
@@ -18,25 +18,56 @@ import PasswordIcon from 'react-native-vector-icons/FontAwesome';
 import GoogleIcon from 'react-native-vector-icons/AntDesign';
 import CustomButton from '../../Components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
+import { LoginApi } from '../../Api/Auth';
+import { authcontext } from '../../Context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = () => {
     const [rememberMe, setRememberMe] = useState(false);
-    const navigation=useNavigation()
+    const navigation = useNavigation();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false)
+    const { islogin, setislogin } = useContext(authcontext);
 
-    const HandleLogin=async()=>{
- navigation.navigate(routes.USERTYPE_SCREEN)
-    }
+    const HandleLogin = async () => {
+        if (!email) {
+            Alert.alert('Email is Required');
+            return;
+        } else if (!password) {
+            Alert.alert('Password is Required');
+            return
+        }
+        setLoading(true)
+        try {
+            let res = await LoginApi({
+                Email: email,
+                Password: password,
+            });
+
+            if (res.status) {
+                Alert.alert("Login Success")
+                await AsyncStorage.setItem("token", res.token)
+                await AsyncStorage.setItem("userid", res.data._id)
+                setislogin(true)
+            } else {
+                Alert.alert(res.message)
+            }
+        } catch (error) {
+
+        } finally {
+            setLoading(false)
+        }
+    };
 
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-            >
+                keyboardShouldPersistTaps="handled">
                 <View style={{ flex: 1 }}>
                     <View style={styles.header}>
                         <ImageBackground
@@ -65,6 +96,8 @@ const Login = () => {
                                         placeholderTextColor="#888"
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        value={email}
+                                        onChangeText={text => setEmail(text)}
                                     />
                                 </View>
 
@@ -80,6 +113,7 @@ const Login = () => {
                                         placeholder="Password"
                                         placeholderTextColor="#888"
                                         secureTextEntry
+                                        onChangeText={text => setPassword(text)}
                                     />
                                 </View>
                             </View>
@@ -87,9 +121,10 @@ const Login = () => {
                             <View style={styles.rememberRow}>
                                 <Pressable
                                     style={styles.checkboxContainer}
-                                    onPress={() => setRememberMe(!rememberMe)}
-                                >
-                                    <View style={[styles.checkbox, rememberMe && styles.checkedBox]} />
+                                    onPress={() => setRememberMe(!rememberMe)}>
+                                    <View
+                                        style={[styles.checkbox, rememberMe && styles.checkedBox]}
+                                    />
                                     <Text style={styles.rememberText}>Remember me</Text>
                                 </Pressable>
 
@@ -102,7 +137,8 @@ const Login = () => {
                                 buttonStyle={styles.loginButton}
                                 TextStyle={styles.loginButtonText}
                                 text="Login"
-                                  onClick={()=>HandleLogin()}
+                                onClick={() => HandleLogin()}
+                                loading={loading}
                             />
 
                             <View style={styles.orContainer}>
@@ -118,7 +154,8 @@ const Login = () => {
 
                             <View style={styles.signupContainer}>
                                 <Text style={styles.signupText}>Are you new here? </Text>
-                                <TouchableOpacity onPress={()=>navigation.navigate(routes.SIGNUP_SCREEN)}>
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate(routes.SIGNUP_SCREEN)}>
                                     <Text style={[styles.signupText, { color: colors.PRIMARY }]}>
                                         Sign Up
                                     </Text>

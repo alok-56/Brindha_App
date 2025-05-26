@@ -18,22 +18,67 @@ import PasswordIcon from 'react-native-vector-icons/FontAwesome';
 import GoogleIcon from 'react-native-vector-icons/AntDesign';
 import CustomButton from '../../Components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
+import { SignUpApi } from '../../Api/Auth';
 
-const Signup = () => {
+const Signup = ({ route }) => {
     const [agreeTerms, setAgreeTerms] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [number, setNumber] = useState('');
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigation = useNavigation();
 
-    const navigation=useNavigation()
+    const { type } = route.params
+
+    const HandleSignup = async () => {
+        if (!name) {
+            Alert.alert('name is Required');
+            return;
+        } else if (!email) {
+            Alert.alert('Email is Required');
+            return;
+        } else if (!number) {
+            Alert.alert('Number is Required');
+            return;
+        } else if (number.length !== 10) {
+            Alert.alert('Number must be 10 digit');
+            return;
+        } else if (!password) {
+            Alert.alert('Password is Required');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            let res = await SignUpApi({
+                Username: name,
+                Email: email,
+                Number: Number(number),
+                Password: password,
+                UserType: type,
+            });
+
+            if (res.status) {
+                Alert.alert('Signup Success');
+               navigation.navigate(routes.LOGIN_SCREEN)
+            } else {
+                Alert.alert(res.message);
+            }
+        } catch (error) {
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-            >
+                keyboardShouldPersistTaps="handled">
                 <View style={{ flex: 1 }}>
                     <View style={styles.header}>
                         <ImageBackground
@@ -60,6 +105,8 @@ const Signup = () => {
                                         style={styles.input}
                                         placeholder="Full Name"
                                         placeholderTextColor="#888"
+                                        value={name}
+                                        onChangeText={text => setName(text)}
                                     />
                                 </View>
 
@@ -76,6 +123,8 @@ const Signup = () => {
                                         placeholderTextColor="#888"
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        value={email}
+                                        onChangeText={text => setEmail(text)}
                                     />
                                 </View>
 
@@ -91,6 +140,8 @@ const Signup = () => {
                                         placeholder="Phone Number"
                                         placeholderTextColor="#888"
                                         keyboardType="phone-pad"
+                                        value={number}
+                                        onChangeText={text => setNumber(text)}
                                     />
                                 </View>
 
@@ -106,6 +157,8 @@ const Signup = () => {
                                         placeholder="Password"
                                         placeholderTextColor="#888"
                                         secureTextEntry
+                                        value={password}
+                                        onChangeText={text => setPassword(text)}
                                     />
                                 </View>
                             </View>
@@ -113,10 +166,13 @@ const Signup = () => {
                             <View style={styles.rememberRow}>
                                 <Pressable
                                     style={styles.checkboxContainer}
-                                    onPress={() => setAgreeTerms(!agreeTerms)}
-                                >
-                                    <View style={[styles.checkbox, agreeTerms && styles.checkedBox]} />
-                                    <Text style={styles.rememberText}>I agree to Terms & Conditions</Text>
+                                    onPress={() => setAgreeTerms(!agreeTerms)}>
+                                    <View
+                                        style={[styles.checkbox, agreeTerms && styles.checkedBox]}
+                                    />
+                                    <Text style={styles.rememberText}>
+                                        I agree to Terms & Conditions
+                                    </Text>
                                 </Pressable>
                             </View>
 
@@ -124,7 +180,8 @@ const Signup = () => {
                                 buttonStyle={styles.loginButton}
                                 TextStyle={styles.loginButtonText}
                                 text="Sign Up"
-                                onClick={()=>Alert.alert("Network request failed")}
+                                onClick={() => HandleSignup()}
+                                loading={loading}
                             />
 
                             <View style={styles.orContainer}>
@@ -140,7 +197,8 @@ const Signup = () => {
 
                             <View style={styles.signupContainer}>
                                 <Text style={styles.signupText}>Already have an account? </Text>
-                                <TouchableOpacity onPress={()=>navigation.navigate(routes.LOGIN_SCREEN)}>
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate(routes.LOGIN_SCREEN)}>
                                     <Text style={[styles.signupText, { color: colors.PRIMARY }]}>
                                         Log In
                                     </Text>

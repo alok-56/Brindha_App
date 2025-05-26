@@ -8,39 +8,42 @@ import {
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { colors } from "../../Helper/Contant";
+import { colors, routes } from "../../Helper/Contant";
 import Header from "../../Components/Header";
 
 const FilterScreen = ({ navigation }) => {
     const [price, setPrice] = useState(1000);
     const [selectedColor, setSelectedColor] = useState(null);
     const [selectedRating, setSelectedRating] = useState(null);
-    const [sortOption, setSortOption] = useState(null);
 
     const colorOptions = ["#FF6347", "#4169E1", "#32CD32", "#FFD700", "#000"];
 
     const handleApply = () => {
-        navigation.goBack();
+        const filters = {
+            maxPrice: price,
+            color: selectedColor,
+            rating: selectedRating,
+        };
+        navigation.navigate(routes.PRODUCT_SCREEN, { filters });
     };
 
     const handleReset = () => {
         setPrice(1000);
         setSelectedColor(null);
         setSelectedRating(null);
-        setSortOption(null);
     };
 
     return (
         <View style={styles.container}>
             <View style={{ marginTop: 20 }}>
-                <Header onBack={()=>navigation.goBack()}>
+                <Header onBack={() => navigation.goBack()}>
                     <Text style={styles.headerTitle}>Filters</Text>
                     <View />
                 </Header>
             </View>
 
-
             <ScrollView contentContainerStyle={styles.content}>
+                {/* Price Range */}
                 <Text style={styles.label}>Price Range</Text>
                 <View style={styles.card}>
                     <Text style={styles.priceText}>₹{price}</Text>
@@ -99,32 +102,6 @@ const FilterScreen = ({ navigation }) => {
                                 ))}
                             </View>
                             <Text style={styles.ratingText}> & Up</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Sort Option */}
-                <Text style={styles.label}>Sort By</Text>
-                <View style={[styles.card, styles.sortContainer]}>
-                    {["Popular", "Recent"].map((option, i) => (
-                        <TouchableOpacity
-                            key={i}
-                            style={[
-                                styles.sortButton,
-                                sortOption === option && styles.selectedSort,
-                            ]}
-                            onPress={() =>
-                                setSortOption(sortOption === option ? null : option)
-                            }
-                        >
-                            <Text
-                                style={[
-                                    styles.sortText,
-                                    sortOption === option && { color: colors.PRIMARY },
-                                ]}
-                            >
-                                {option}
-                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -219,26 +196,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#333",
         marginLeft: 6,
-    },
-    sortContainer: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-    },
-    sortButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "#ccc",
-    },
-    selectedSort: {
-        borderColor: colors.PRIMARY,
-        backgroundColor: "#eef7ff",
-    },
-    sortText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#444",
     },
     buttonContainer: {
         flexDirection: "row",
